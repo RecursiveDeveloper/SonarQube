@@ -1,7 +1,8 @@
 resource "aws_instance" "sonarqube_ec2" {
-  ami                    = var.sonarqube_instance_ami
-  instance_type          = var.sonarqube_instance_type
-  vpc_security_group_ids = [aws_security_group.sonarqube_sg.id]
+  ami                     = var.sonarqube_instance_ami
+  instance_type           = var.sonarqube_instance_type
+  vpc_security_group_ids  = [aws_security_group.sonarqube_sg.id]
+  key_name                = "sonarqube_kp"
   user_data = "${file("./scripts/user_data_ubuntu.sh")}"
 
   tags = {

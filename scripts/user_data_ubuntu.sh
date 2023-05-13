@@ -1,49 +1,31 @@
 #!/bin/bash
 
-SONARQUBE_HOST_PORT=9000
+SONARQUBE_URL="https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-9.9.1.69595.zip?_gl=1*ay3dew*_ga*NTE4MzYyODAwLjE2ODM5MDM5Mzc.*_ga_9JZ0GZ5TC6*MTY4MzkwMzkzNi4xLjEuMTY4MzkwNTUzNC41MS4wLjA."
+SONARQUBE_ZIP_FILE_NAME="SonarQube.zip"
+SONARQUBE_DEST_FOLDER_NAME="SonarQube_Instance"
+EC2_USER="ubuntu"
 
-echo -e "\n---------------------------------------------"
-echo "Removing docker resources if exist"
+echo -e "\nVerifying directory"
 echo -e "---------------------------------------------\n"
-sudo apt-get purge -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin docker-ce-rootless-extras
-sudo rm -rf /var/lib/docker
-sudo rm -rf /var/lib/containerd
-sudo rm -rf /etc/apt/keyrings
+pwd
+cd ./home/ubuntu/
+pwd
 
-echo -e "\n---------------------------------------------"
-echo "Installing dependencies"
+echo -e "\nInstalling dependencies"
 echo -e "---------------------------------------------\n"
-sudo apt-get update -y
-sudo apt-get -y install ca-certificates curl gnupg
+apt update -y && \
+apt install -y openjdk-17-jdk openjdk-17-jre && \
+apt install -y wget && \
+apt install -y unzip
 
-echo -e "\n---------------------------------------------"
-echo "Adding Docker's official GPG key"
+echo -e "\nDownloading SonarQube zip file"
 echo -e "---------------------------------------------\n"
-sudo install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-sudo chmod a+r /etc/apt/keyrings/docker.gpg
+wget -O $SONARQUBE_ZIP_FILE_NAME $SONARQUBE_URL
 
-echo -e "\n---------------------------------------------"
-echo "Setting up repository"
+echo -e "\nExtracting SonarQube zip file"
 echo -e "---------------------------------------------\n"
-echo \
-  "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-  "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
-  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+unzip -qq $SONARQUBE_ZIP_FILE_NAME -d $SONARQUBE_DEST_FOLDER_NAME
 
-echo -e "\n---------------------------------------------"
-echo "Installing docker resources"
+echo -e "\nStarting SonarQube instance"
 echo -e "---------------------------------------------\n"
-sudo apt-get update -y
-sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-
-echo -e "\n---------------------------------------------"
-echo "Checking docker service"
-echo -e "---------------------------------------------\n"
-sudo ps aux | grep docker
-
-echo -e "\n---------------------------------------------"
-echo "Running sonarqube container on port ${SONARQUBE_HOST_PORT}"
-echo -e "---------------------------------------------\n"
-sudo docker run -d --name sonarqube -e SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true -p $SONARQUBE_HOST_PORT:9000 sonarqube:latest
-sudo docker ps -a
+sudo -u $EC2_USER -c 'whoami;./${SONARQUBE_DEST_FOLDER_NAME}/sonarqube*/bin/linux-x86-64/sonar.sh console'
