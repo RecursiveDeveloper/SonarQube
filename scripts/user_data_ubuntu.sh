@@ -1,31 +1,29 @@
 #!/bin/bash
 
-SONARQUBE_URL="https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-9.9.1.69595.zip?_gl=1*ay3dew*_ga*NTE4MzYyODAwLjE2ODM5MDM5Mzc.*_ga_9JZ0GZ5TC6*MTY4MzkwMzkzNi4xLjEuMTY4MzkwNTUzNC41MS4wLjA."
-SONARQUBE_ZIP_FILE_NAME="SonarQube.zip"
-SONARQUBE_DEST_FOLDER_NAME="SonarQube_Instance"
-EC2_USER="ubuntu"
+SONARQUBE_USER="sonarqube"
+BINARY_PATH="https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-9.4.0.54424.zip"
+ZIP_FILE_NAME="sonarqube_install.zip"
+UNZIPPED_FILE_NAME="sonarqube_install"
 
-echo -e "\nVerifying directory"
+echo -e "\n---------------------------------------------"
+echo -e "Installing dependencies"
 echo -e "---------------------------------------------\n"
-pwd
-cd ./home/ubuntu/
-pwd
+sudo apt update     -y
+sudo apt install    -y openjdk-11-jre-headless
+sudo apt install    -y unzip
+sudo apt install    -y net-tools
 
-echo -e "\nInstalling dependencies"
+echo -e "\n---------------------------------------------"
+echo -e "Add user and get installer"
 echo -e "---------------------------------------------\n"
-apt update -y && \
-apt install -y openjdk-17-jdk openjdk-17-jre && \
-apt install -y wget && \
-apt install -y unzip
+sudo useradd $SONARQUBE_USER
+wget $BINARY_PATH -O $ZIP_FILE_NAME
+unzip $ZIP_FILE_NAME -d $UNZIPPED_FILE_NAME
 
-echo -e "\nDownloading SonarQube zip file"
+echo -e "\n---------------------------------------------"
+echo -e "Change permissions"
 echo -e "---------------------------------------------\n"
-wget -O $SONARQUBE_ZIP_FILE_NAME $SONARQUBE_URL
+sudo chmod -R 755 ./$UNZIPPED_FILE_NAME
+sudo chown -R sonarqube:sonarqube ./$UNZIPPED_FILE_NAME
 
-echo -e "\nExtracting SonarQube zip file"
-echo -e "---------------------------------------------\n"
-unzip -qq $SONARQUBE_ZIP_FILE_NAME -d $SONARQUBE_DEST_FOLDER_NAME
-
-echo -e "\nStarting SonarQube instance"
-echo -e "---------------------------------------------\n"
-sudo -u $EC2_USER -c 'whoami;./${SONARQUBE_DEST_FOLDER_NAME}/sonarqube*/bin/linux-x86-64/sonar.sh console'
+./sonarqube_install/sonarqube*/bin/linux*/sonar.sh start
