@@ -3,7 +3,7 @@ resource "aws_instance" "sonarqube_ec2" {
   instance_type           = var.sonarqube_instance_type
   vpc_security_group_ids  = [aws_security_group.sonarqube_sg.id]
   #key_name                = ""
-  #user_data               = file("./scripts/user_data_ubuntu.sh")
+  user_data               = file("./scripts/user_data_ubuntu.sh")
 
   tags = {
     Name        = "sonarqube_ec2"
