@@ -33,7 +33,7 @@ resource "aws_security_group_rule" "rule_in_ssh" {
   security_group_id = aws_security_group.sonarqube_sg.id
 }
 
-resource "aws_security_group_rule" "rule_in_sonar" {
+resource "aws_security_group_rule" "rule_in_http" {
   type        = "ingress"
   from_port   = 80
   to_port     = 80
