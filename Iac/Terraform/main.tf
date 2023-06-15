@@ -1,7 +1,12 @@
-module "resource_group" {
-  source = "./modules"
+module "Ec2_module" {
+  source = "./modules/Ec2"
 
-  sonarqube_vpc_id              = var.sonarqube_vpc_id
-  sonarqube_instance_ami        = var.sonarqube_instance_ami
-  sonarqube_instance_type       = var.sonarqube_instance_type
+  sonarqube_instance_ami      = var.sonarqube_instance_ami
+  sonarqube_instance_type     = var.sonarqube_instance_type
+  sonarqube_public_subnet_id  = module.Vpc_module.sonarqube_public_subnet_id
+  sonarqube_vpc_id            = module.Vpc_module.sonarqube_vpc_id
+}
+
+module "Vpc_module" {
+  source = "./modules/Vpc"
 }
