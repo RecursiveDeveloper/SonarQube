@@ -1,0 +1,86 @@
+trigger:
+  - main
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+  - stage: DeploySonarQube
+    displayName: "Deploy SonarQube"
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - job: TerraformInit
+        displayName: "Initialize Terraform Resources"
+        condition: succeeded()
+        steps:
+          - task: TerraformTaskV4@4
+            displayName: "Terraform validate task"
+            inputs:
+              provider: 'aws'
+              command: 'validate'
+              workingDirectory: '$(System.DefaultWorkingDirectory)\Iac\Terraform'
+
+          - task: TerraformTaskV4@4
+            displayName: "Terraform init task"
+            inputs:
+              provider: 'aws'
+              command: 'init'
+              workingDirectory: '$(System.DefaultWorkingDirectory)\Iac\Terraform'
+              backendServiceAWS: 'Terraform deploy to aws'
+              backendAWSBucketName: 'terraform-state-sonarq'
+              backendAWSKey: 'path/state/key'
+
+      - job: TerraformPlan
+        displayName: "Display Terraform Plan Output"
+        dependsOn: TerraformInit
+        condition: succeeded()
+        steps:
+          - task: TerraformTaskV4@4
+            displayName: "Terraform Plan task"
+            inputs:
+              provider: 'aws'
+              command: 'plan'
+              environmentServiceNameAWS: 'Terraform deploy to aws'
+
+      - job: TerraformApply
+        displayName: "Terraform Apply resources"
+        dependsOn: TerraformPlan
+        condition: succeeded()
+        steps:
+          - task: TerraformTaskV4@4
+            inputs:
+              provider: 'aws'
+              command: 'apply'
+              environmentServiceNameAWS: 'Terraform deploy to aws'
+
+      - job: waitForValidation
+        displayName: Wait for external validation
+        condition: succeeded()
+        pool: server
+        timeoutInMinutes: 4320 # job times out in 3 days
+        steps:
+        - task: ManualValidation@0
+          timeoutInMinutes: 1440 # task times out in 1 day
+          inputs:
+            notifyUsers: |
+              test@test.com
+              example@example.com
+            instructions: 'Please validate the build configuration and resume'
+            onTimeout: 'reject'
+
+      - job: TerraformDestroy
+        displayName: "Terraform Destroy resources"
+        dependsOn:
+          - waitForValidation
+          - TerraformApply
+        condition: or
+          (
+            eq(dependencies.waitForValidation.result, 'Succeeded'),
+            eq(dependencies.TerraformApply.result, 'failed')
+          )
+        steps:
+          - task: TerraformTaskV4@4
+            inputs:
+              provider: 'aws'
+              command: 'destroy'
+              environmentServiceNameAWS: 'Terraform deploy to aws'
