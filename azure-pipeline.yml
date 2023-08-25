@@ -2,7 +2,7 @@ trigger:
   - main
 
 pool:
-  vmImage: ubuntu-latest
+  name: RecursiveDevAgent
 
 stages:
   - stage: DeploySonarQube
@@ -14,13 +14,6 @@ stages:
         condition: succeeded()
         steps:
           - task: TerraformTaskV4@4
-            displayName: "Terraform validate task"
-            inputs:
-              provider: 'aws'
-              command: 'validate'
-              workingDirectory: '$(System.DefaultWorkingDirectory)\Iac\Terraform'
-
-          - task: TerraformTaskV4@4
             displayName: "Terraform init task"
             inputs:
               provider: 'aws'
@@ -29,6 +22,13 @@ stages:
               backendServiceAWS: 'Terraform deploy to aws'
               backendAWSBucketName: 'terraform-state-sonarq'
               backendAWSKey: 'path/state/key'
+
+          - task: TerraformTaskV4@4
+            displayName: "Terraform validate task"
+            inputs:
+              provider: 'aws'
+              command: 'validate'
+              workingDirectory: '$(System.DefaultWorkingDirectory)\Iac\Terraform'
 
       - job: TerraformPlan
         displayName: "Display Terraform Plan Output"
@@ -40,6 +40,7 @@ stages:
             inputs:
               provider: 'aws'
               command: 'plan'
+              commandOptions: '-out=tfplan'
               environmentServiceNameAWS: 'Terraform deploy to aws'
 
       - job: TerraformApply
@@ -51,10 +52,12 @@ stages:
             inputs:
               provider: 'aws'
               command: 'apply'
+              commandOptions: '-auto-approve'
               environmentServiceNameAWS: 'Terraform deploy to aws'
 
       - job: waitForValidation
         displayName: Wait for external validation
+        dependsOn: TerraformApply
         condition: succeeded()
         pool: server
         timeoutInMinutes: 4320 # job times out in 3 days

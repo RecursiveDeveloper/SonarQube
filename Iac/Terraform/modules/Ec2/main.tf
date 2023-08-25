@@ -35,6 +35,16 @@ resource "aws_security_group_rule" "rule_in_http" {
   security_group_id = aws_security_group.sonarqube_sg.id
 }
 
+resource "aws_security_group_rule" "rule_in_ssh" {
+  type              = "ingress"
+  from_port         = 22
+  to_port           = 22
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+
+  security_group_id = aws_security_group.sonarqube_sg.id
+}
+
 resource "aws_security_group_rule" "rule_in_sonar" {
   type              = "ingress"
   from_port         = 9000
