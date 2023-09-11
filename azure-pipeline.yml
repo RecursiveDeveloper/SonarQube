@@ -13,7 +13,7 @@ stages:
         displayName: "Deploy Terraform resources into AWS"
         condition: succeeded()
         steps:
-          - template azure-templates/Build-Resource.yml
+          - template: "azure-templates/Build-Resource.yml"
 
       - job: waitForValidation
         displayName: "Wait for external validation"
@@ -41,4 +41,4 @@ stages:
             eq(dependencies.TerraformUpResources.result, 'failed')
           )
         steps:
-          - template azure-templates/Destroy-Resource.yml
+          - template: "azure-templates/Destroy-Resource.yml"

@@ -35,4 +35,5 @@ steps:
       provider: 'aws'
       command: 'apply'
       commandOptions: '-auto-approve'
+      workingDirectory: '$(System.DefaultWorkingDirectory)\Iac\Terraform'
       environmentServiceNameAWS: 'Terraform deploy to aws'
